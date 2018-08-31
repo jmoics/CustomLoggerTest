@@ -21,7 +21,7 @@ public class JobLogger
     private Appender CONSOLEAPPENDER;
     private Appender FILEAPPENDER;
 
-    public JobLogger(final String _name)
+    protected JobLogger(final String _name)
     {
         if (!initialized) {
             this.name = _name;
@@ -42,7 +42,7 @@ public class JobLogger
     }
 
     // For Testing
-    public JobLogger(final String _name,
+    protected JobLogger(final String _name,
                      final Properties _configuration) {
         this.name = _name;
         configuration = _configuration;
