@@ -14,15 +14,17 @@ import pe.exam.appender.FileAppender;
 public class JobLogger
     implements Logger
 {
-    private static boolean initialized;
-    private static Properties configuration;
-    private static Appender DBAPPENDER;
-    private static Appender CONSOLEAPPENDER;
-    private static Appender FILEAPPENDER;
+    private String name;
+    private boolean initialized;
+    private Properties configuration;
+    private Appender DBAPPENDER;
+    private Appender CONSOLEAPPENDER;
+    private Appender FILEAPPENDER;
 
-    public JobLogger()
+    public JobLogger(final String _name)
     {
         if (!initialized) {
+            this.name = _name;
             configuration = new Properties();
             try {
                 configuration.load(JobLogger.class.getResourceAsStream("/logger.properties"));
@@ -40,7 +42,9 @@ public class JobLogger
     }
 
     // For Testing
-    public JobLogger(final Properties _configuration) {
+    public JobLogger(final String _name,
+                     final Properties _configuration) {
+        this.name = _name;
         configuration = _configuration;
         validateConfiguration();
         LogManager.getLogManager().reset();
@@ -49,8 +53,18 @@ public class JobLogger
         FILEAPPENDER = new FileAppender();
     }
 
-    public static JobLogger getLogger() {
+    /*public static JobLogger getLogger() {
         return new JobLogger();
+    }*/
+
+    /**
+     * Getter method for the variable {@link #name}.
+     *
+     * @return value of variable {@link #name}
+     */
+    public String getName()
+    {
+        return this.name;
     }
 
     private void validateConfiguration()
