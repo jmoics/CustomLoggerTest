@@ -56,6 +56,8 @@ public class FileAppender
 
     @Override
     protected void reinsertHandler() {
-        logger.addHandler(getHandlerTemp());
+        if (getHandlerTemp() != null) {
+            logger.addHandler(getHandlerTemp());
+        }
     }
 }

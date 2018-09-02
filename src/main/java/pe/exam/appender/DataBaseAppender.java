@@ -18,9 +18,7 @@ public class DataBaseAppender
         dbProps = new Properties();
         try {
             dbProps.load(DataBaseAppender.class.getResourceAsStream("/jdbc.properties"));
-            final String url = dbProps.getProperty("url");
-            connection = DriverManager.getConnection(url, dbProps);
-        } catch (final IOException | SQLException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
         }
     }
@@ -30,13 +28,15 @@ public class DataBaseAppender
     {
         Statement stmt;
         try {
+            final String url = dbProps.getProperty("url");
+            connection = DriverManager.getConnection(url, dbProps);
             stmt = connection.createStatement();
             final String sql = new StringBuilder("insert into log_values (message,logtype) values('")
                             .append(_messageText).append("', ")
                             .append(String.valueOf(logType)).append(")")
                             .toString();
             stmt.executeUpdate(sql);
-            //connection.close();
+            connection.close();
         } catch (final SQLException e) {
             e.printStackTrace();
         }

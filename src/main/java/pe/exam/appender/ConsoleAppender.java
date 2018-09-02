@@ -30,7 +30,9 @@ public class ConsoleAppender
 
     @Override
     protected void reinsertHandler() {
-        logger.addHandler(getHandlerTemp());
+        if (getHandlerTemp() != null) {
+            logger.addHandler(getHandlerTemp());
+        }
     }
 
 }
