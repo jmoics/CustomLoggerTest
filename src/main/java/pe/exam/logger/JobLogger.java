@@ -6,7 +6,6 @@ import java.util.Properties;
 import java.util.logging.LogManager;
 
 import pe.exam.Utility;
-import pe.exam.appender.Appender;
 import pe.exam.appender.ConsoleAppender;
 import pe.exam.appender.DataBaseAppender;
 import pe.exam.appender.FileAppender;
@@ -17,14 +16,13 @@ public class JobLogger
     private String name;
     private boolean initialized;
     private Properties configuration;
-    private Appender DBAPPENDER;
-    private Appender CONSOLEAPPENDER;
-    private Appender FILEAPPENDER;
+    private AppenderManager appenderManager;
 
     protected JobLogger(final String _name)
     {
         if (!initialized) {
             this.name = _name;
+            appenderManager = AppenderManager.getAppenderManager();
             configuration = new Properties();
             try {
                 configuration.load(JobLogger.class.getResourceAsStream("/logger.properties"));
@@ -34,28 +32,23 @@ public class JobLogger
             }
             validateConfiguration();
             LogManager.getLogManager().reset();
-            DBAPPENDER = new DataBaseAppender();
-            CONSOLEAPPENDER = new ConsoleAppender();
-            FILEAPPENDER = new FileAppender();
+            addAppenders();
             initialized = true;
         }
     }
 
     // For Testing
     protected JobLogger(final String _name,
-                     final Properties _configuration) {
+                        final Properties _configuration)
+    {
         this.name = _name;
+        appenderManager = AppenderManager.getAppenderManager();
+        appenderManager.removeAppenders();
         configuration = _configuration;
         validateConfiguration();
         LogManager.getLogManager().reset();
-        DBAPPENDER = new DataBaseAppender();
-        CONSOLEAPPENDER = new ConsoleAppender();
-        FILEAPPENDER = new FileAppender();
+        addAppenders();
     }
-
-    /*public static JobLogger getLogger() {
-        return new JobLogger();
-    }*/
 
     /**
      * Getter method for the variable {@link #name}.
@@ -65,6 +58,21 @@ public class JobLogger
     public String getName()
     {
         return this.name;
+    }
+
+    private void addAppenders() {
+        if (configuration.containsKey(Utility.LOGGER_APPENDER_CONSOLE)
+                        && Boolean.parseBoolean(configuration.getProperty(Utility.LOGGER_APPENDER_CONSOLE))) {
+            appenderManager.addAppender(new ConsoleAppender());
+        }
+        if (configuration.containsKey(Utility.LOGGER_APPENDER_FILE)
+                        && Boolean.parseBoolean(configuration.getProperty(Utility.LOGGER_APPENDER_FILE))) {
+            appenderManager.addAppender(new FileAppender());
+        }
+        if (configuration.containsKey(Utility.LOGGER_APPENDER_DATABASE)
+                        && Boolean.parseBoolean(configuration.getProperty(Utility.LOGGER_APPENDER_DATABASE))) {
+            appenderManager.addAppender(new DataBaseAppender());
+        }
     }
 
     private void validateConfiguration()
@@ -99,7 +107,7 @@ public class JobLogger
                         && Boolean.parseBoolean(configuration.getProperty(Utility.LOGGER_MESSAGE))
                         && validateMessage(_messageText)) {
             final String message = formatMessage(_messageText, Utility.MESSAGE);
-            publishMessage(message, Utility.MESSAGE_ID);
+            appenderManager.executeAppenders(message, Utility.MESSAGE_ID);
         }
     }
 
@@ -109,7 +117,7 @@ public class JobLogger
                         && Boolean.parseBoolean(configuration.getProperty(Utility.LOGGER_WARN))
                         && validateMessage(_messageText)) {
             final String message = formatMessage(_messageText, Utility.WARN);
-            publishMessage(message, Utility.WARN_ID);
+            appenderManager.executeAppenders(message, Utility.WARN_ID);
         }
     }
 
@@ -119,29 +127,12 @@ public class JobLogger
                         && Boolean.parseBoolean(configuration.getProperty(Utility.LOGGER_ERROR))
                         && validateMessage(_messageText)) {
             final String message = formatMessage(_messageText, Utility.ERROR);
-            publishMessage(message, Utility.ERROR_ID);
+            appenderManager.executeAppenders(message, Utility.ERROR_ID);
         }
     }
 
     private String formatMessage(final String _message, final String _logType) {
         return new StringBuilder(_logType).append(getNow()).append(": ").append(_message).toString();
-    }
-
-    private void publishMessage(final String _message, final int _logType) {
-        if (configuration.containsKey(Utility.LOGGER_APPENDER_FILE)
-                        && Boolean.parseBoolean(configuration.getProperty(Utility.LOGGER_APPENDER_FILE))) {
-            FILEAPPENDER.execute(_message, _logType);
-        }
-
-        if (configuration.containsKey(Utility.LOGGER_APPENDER_CONSOLE)
-                        && Boolean.parseBoolean(configuration.getProperty(Utility.LOGGER_APPENDER_CONSOLE))) {
-            CONSOLEAPPENDER.execute(_message, _logType);
-        }
-
-        if (configuration.containsKey(Utility.LOGGER_APPENDER_DATABASE)
-                        && Boolean.parseBoolean(configuration.getProperty(Utility.LOGGER_APPENDER_DATABASE))) {
-            DBAPPENDER.execute(_message, _logType);
-        }
     }
 
     private static String getNow() {
